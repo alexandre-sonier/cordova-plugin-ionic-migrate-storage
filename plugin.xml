@@ -8,6 +8,10 @@
     </description>
     <keywords>ecosystem:cordova,cordova-plugin,cordova,cordova-ios,ios,uiwebview,wkwebview,localstorage</keywords>
 
+    <js-module name="MigrateIOSStorage" src="www/migrate-ios-storage.js">
+        <clobbers target="cordova.plugins.MigrateIOSStorage" />
+    </js-module>
+
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
             <feature name="MigrateStorage">

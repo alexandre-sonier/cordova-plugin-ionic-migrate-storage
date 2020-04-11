@@ -198,9 +198,12 @@
     return NO;
 }
 
-- (void)pluginInitialize
-{
-    logDebug(@"%@ pluginInitialize()", TAG);
+- (void)pluginInitialize {
+    NSLog(@"Starting MigrateIOSStorage plugin");
+}
+
+- (void)execute:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* pluginResult;
 
     NSDictionary *cdvSettings = self.commandDelegate.settings;
 
@@ -237,7 +240,7 @@
     [self migrateLocalStorage];
     [self migrateIndexedDB];
 
-    logDebug(@"%@ end pluginInitialize()", TAG);
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"finish"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
-
 @end
