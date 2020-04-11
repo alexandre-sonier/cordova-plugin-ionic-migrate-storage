@@ -15,6 +15,7 @@
 #define TAG @"\nMigrateStorage"
 
 #define LOCALSTORAGE_DIRPATH @"WebKit/WebsiteData/LocalStorage/"
+#define IDB_DIRPATH @"WebKit/WebsiteData/IndexedDB/v1/"
 
 #define DEFAULT_TARGET_HOSTNAME @"localhost"
 #define DEFAULT_TARGET_SCHEME @"ionic"
@@ -150,7 +151,7 @@
 
     // Only copy data if no existing localstorage data exists yet for wkwebview
     if (![fileManager fileExistsAtPath:targetLocalStorageFilePath]) {
-        logDebug(@"%@ No existing localstorage data found for WKWebView. Migrating data from UIWebView", TAG);
+        logDebug(@"%@ No existing localstorage data found for WKWebView for that scheme/hostname. Migrating data from WKWebView on previous scheme/hostname", TAG);
         BOOL success1 = [self moveFile:originalLocalStorageFilePath to:targetLocalStorageFilePath];
         BOOL success2 = [self moveFile:[originalLocalStorageFilePath stringByAppendingString:@"-shm"] to:[targetLocalStorageFilePath stringByAppendingString:@"-shm"]];
         BOOL success3 = [self moveFile:[originalLocalStorageFilePath stringByAppendingString:@"-wal"] to:[targetLocalStorageFilePath stringByAppendingString:@"-wal"]];
@@ -165,6 +166,36 @@
     logDebug(@"%@ end migrateLocalStorage() with success: %@", TAG, success ? @"YES": @"NO");
 
     return success;
+}
+
+- (BOOL) migrateIndexedDB
+{
+    logDebug(@"%@ migrateIndexedDB()", TAG);
+
+    NSString *originWkWebviewProtocolDir = [self getOriginalPath];
+    NSString *newWkWebviewProtocolDir = [self getTargetPath];
+
+    NSString *appLibraryFolder = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    NSString *original = [[appLibraryFolder stringByAppendingPathComponent:IDB_DIRPATH] stringByAppendingPathComponent:originWkWebviewProtocolDir];
+    NSString *target = [[appLibraryFolder stringByAppendingPathComponent:IDB_DIRPATH] stringByAppendingPathComponent:newWkWebviewProtocolDir];
+
+    logDebug(@"%@ IDB original %@", TAG, original);
+    logDebug(@"%@ IDB target %@", TAG, target);
+
+    if (![[NSFileManager defaultManager] fileExistsAtPath:target]) {
+        logDebug(@"%@ No existing IDB data found for WKWebView for that scheme/hostname. Migrating data from WKWebView on previous scheme/hostname", TAG);
+        BOOL success = [self moveFile:original to:target];
+        logDebug(@"%@ copy status %d", TAG, success);
+        return success;
+    }
+    else {
+        logDebug(@"%@ found IDB data. Not migrating", TAG);
+        return NO;
+    }
+    return NO;
 }
 
 - (void)pluginInitialize
@@ -204,6 +235,7 @@
     }
 
     [self migrateLocalStorage];
+    [self migrateIndexedDB];
 
     logDebug(@"%@ end pluginInitialize()", TAG);
 }
